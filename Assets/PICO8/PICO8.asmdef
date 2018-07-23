@@ -1,0 +1,11 @@
+{
+    "name": "PICO8",
+    "references": [
+        "MoonSharp",
+        "FixedPointy"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
