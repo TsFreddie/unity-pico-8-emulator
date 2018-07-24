@@ -3,7 +3,7 @@ using TsFreddie.Pico8;
 
 public class LuaSyntaxTests
 {
-    ScriptProcessor executor = new ScriptProcessor();
+    PicoEmulator executor = new PicoEmulator();
 
     [Test]
     public void IfShorthand()

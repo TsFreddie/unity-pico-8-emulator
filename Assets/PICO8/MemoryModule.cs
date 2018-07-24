@@ -15,16 +15,6 @@ namespace TsFreddie.Pico8
             // 32K Base memory
             ram = new byte[32767];
         }
-
-        public void LoadCart(byte[] cart)
-        {
-
-        }
-
-        public void LoadCartFromFile(string filename)
-        {
-
-        }
         
         public void CopyFromROM(byte[] rom, int offset, int length)
         {

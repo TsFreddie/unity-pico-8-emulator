@@ -4,7 +4,7 @@ using System;
 
 public class MathAPITests
 {
-    ScriptProcessor executor = new ScriptProcessor();
+    PicoEmulator executor = new PicoEmulator();
 
     [Test]
     public void abs()
@@ -42,9 +42,10 @@ public class MathAPITests
     [Test]
     public void bnot()
     {
-        Assert.AreEqual(executor.Run(@"
+        double resultTrunc = (int)(executor.Run(@"
            return bnot(3.25)
-        ").Number, -3.25d);
+        ").Number * 10000) / 10000d;
+        Assert.AreEqual(resultTrunc, -3.25d);
     }
 
     [Test]
@@ -115,17 +116,19 @@ public class MathAPITests
     [Test]
     public void shl()
     {
-        Assert.AreEqual(executor.Run(@"
+        double resultTrunc = (int)(executor.Run(@"
            return shl(1, 15)
-        ").Number, -32768d);
+        ").Number * 10000) / 10000d;
+        Assert.AreEqual(resultTrunc, -32768d);
     }
 
     [Test]
     public void shr()
     {
-        Assert.AreEqual(executor.Run(@"
+        double resultTrunc = (executor.Run(@"
            return shr(-32767, 16)
-        ").Number, -0.5);
+        ").Number * 10000) / 10000d;
+        Assert.AreEqual(resultTrunc, -0.5);
     }
 
 
@@ -133,9 +136,9 @@ public class MathAPITests
     public void sin()
     {
         double resultTrunc = (int)(executor.Run(@"
-           return sin(0.375)
+           return sin(0.625)
         ").Number * 10000) / 10000d;
-        Assert.AreEqual(resultTrunc, -0.7071d);
+        Assert.AreEqual(resultTrunc, 0.7071d);
     }
 
     [Test]
@@ -173,7 +176,7 @@ public class MathAPITests
 
 public class TableAPITests
 {
-    ScriptProcessor executor = new ScriptProcessor();
+    PicoEmulator executor = new PicoEmulator();
 
     [Test]
     public void add()
@@ -191,7 +194,7 @@ public class TableAPITests
     [Test]
     public void all()
     {
-        Assert.Equals(executor.Run(@"
+        Assert.AreEqual(executor.Run(@"
             t = {1, 3, 5}
             add(t, 7)
             add(t, 9)
@@ -200,6 +203,8 @@ public class TableAPITests
             for v in all(t) do
               result += v
             end
+
+            return result
         ").Number, 25d);
     }
 
@@ -216,7 +221,7 @@ public class TableAPITests
             
             if (#t != 3) return false
             if (t[3] != 5) return false
-            return True
+            return true
         ").Boolean);
     }
 
@@ -224,13 +229,13 @@ public class TableAPITests
     public void each()
     {
         Assert.IsTrue(executor.Run(@"
-            isSeven = false
-            function hasSeven(item)
-                if (item == 7) isSeven = True
+            local hasSeven = false
+            function isSeven(item)
+                if (item == 7) hasSeven = true
             end
             t = {1, 3, 'hello', 5, 7}
-            foreach(t, hasSeven)
-            return isSeven
+            foreach(t, isSeven)
+            return hasSeven
         ").Boolean);
     }
 
@@ -254,7 +259,7 @@ public class TableAPITests
 
 public class ObjectAPITests
 {
-    ScriptProcessor executor = new ScriptProcessor();
+    PicoEmulator executor = new PicoEmulator();
 
     [Test]
     public void tostr()

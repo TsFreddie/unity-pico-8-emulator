@@ -11,16 +11,14 @@ public class LuaTest : MonoBehaviour {
     // Use this for initialization
     void Start () {
         Cartridge cart = new Cartridge();
-        MemoryModule memory = new MemoryModule();
-        ScriptProcessor processor = new ScriptProcessor();
+        PicoEmulator processor = new PicoEmulator();
         // Read from cart
         cart.LoadFromP8PNG(filename);
-        // Copy to memory
-        memory.CopyFromROM(cart.ROM, 0, 0x4300);
         // Load script
-        string code = cart.ExtractScript();
-        processor.Load(code);
-        // Load script
+        processor.LoadCartridge(cart);
+        // Coroutine Test
+        processor.Run(@"while true do dprint(4) end");
+
 
 
     }
