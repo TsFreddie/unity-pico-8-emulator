@@ -14,13 +14,17 @@ namespace TsFreddie.Pico8
         const double FRAC = 65536;
 
         // Northbridge
-        MemoryModule memory = new MemoryModule();
-        PictureProcessingUnit ppu = new PictureProcessingUnit();
-        AudioProcessingUnit apu = new AudioProcessingUnit();
+        MemoryModule memory;
+        PictureProcessingUnit ppu;
+        AudioProcessingUnit apu;
 
         // Southbridge
         Cartridge cartridge;
         CartridgeData cartdata;
+
+        // Exposed data
+        public Texture2D Texture { get { return ppu.Texture; } }
+        public byte[] SCREEN { get { return memory.screen; } }
 
         #region PICO8API
         double Rnd(double x) {
@@ -251,6 +255,9 @@ namespace TsFreddie.Pico8
         
         public PicoEmulator() {
             engine = new Script();
+            memory = new MemoryModule();
+            ppu = new PictureProcessingUnit(memory);
+            apu = new AudioProcessingUnit();
             // Random seed
             random = new System.Random();
             // Register APIs
@@ -275,11 +282,11 @@ namespace TsFreddie.Pico8
             DynValue coroutine = engine.CreateCoroutine(luaScript);
             DynValue result = null;
             int cycle = 0;
-            coroutine.Coroutine.AutoYieldCounter = 100;
+            coroutine.Coroutine.AutoYieldCounter = 1000;
             for (result = coroutine.Coroutine.Resume(); result.Type == DataType.YieldRequest; result = coroutine.Coroutine.Resume()) 
             {
-                Debug.Log("Stall");
-                cycle += 1;
+                Debug.Log("cycle");
+                cycle += 4;
                 if (cycle > 1)
                     return new DynValue();
             }
