@@ -24,8 +24,7 @@ public class LuaTest : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        processor.SCREEN[0] = 0xBC;
-	    //processor.SCREEN[Random.Range(0, 0x2000)] = (byte)Random.Range(0, 256);
+        processor.Run("poke(rnd(0x2000) + 0x6000, rnd(0xff))");
         processor.Texture.LoadRawTextureData(processor.SCREEN);
         processor.Texture.Apply();
 	}

@@ -46,6 +46,7 @@ namespace TsFreddie.Pico8
             // C# & Lambda Implemented API
             Dictionary<String, object> apiTable = new Dictionary<String, object>()
             {
+                #region MATH
                 { "abs", (Func<double, double>)Math.Abs },
                 { "atan2", (Func<double, double, double>)((dx, dy) => 1 - Math.Atan2(dy, dx) / (2 * Math.PI)) },
                 { "band", (Func<double, double, double>)((x, y) => ((int)(x * FRAC) & (int)(y * FRAC)) / FRAC) },
@@ -64,6 +65,12 @@ namespace TsFreddie.Pico8
                 { "sqrt", (Func<double, double>)Math.Sqrt },
                 { "srand", (Action<double>)(x => random = new System.Random((int)(x * FRAC))) },
                 { "dprint", (Action<object>)(x => Debug.Log(x)) },
+                #endregion
+                
+                #region MEMORY
+                { "peek", (Func<UInt16, byte>)memory.Peek },
+                { "poke", (Action<UInt16, byte>)memory.Poke },
+                #endregion
             };
 
             foreach (var api in apiTable)

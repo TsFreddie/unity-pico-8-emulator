@@ -9,7 +9,17 @@ namespace TsFreddie.Pico8
 {
     public class MemoryModule
     {
- 
+        public enum BYTE_TABLE : UInt16 {
+            SPRITE = 0x0,
+            MAP = 0x1000,
+            FLAGS = 0x3000,
+            MUSIC = 0x3100,
+            SOUND = 0x3200,
+            GENERAL = 0x4300,
+            CARTDATA = 0x5e00,
+            CURSOR_X = 0x5f26,
+            CURSOR_Y,
+        }
         byte[] ram;
         public byte[] screen;
 
@@ -27,6 +37,31 @@ namespace TsFreddie.Pico8
 
         public byte[] GetVideoBuffer() {
             return screen;
+        }
+
+        public byte Peek(UInt16 addr) {
+            if (addr < 0 || addr >= 0x8000)
+                return 0;
+
+            // accessing vram
+            if (addr >= 0x6000)
+                return screen[addr-0x6000];
+        
+            return ram[addr];
+        }
+
+        public void Poke(UInt16 addr, byte val) {
+            // TODO: throw exceptions
+            if (addr < 0 || addr >= 0x8000)
+                return;
+
+            // accessing vram
+            if (addr >= 0x6000) {
+                screen[addr-0x6000] = val;
+                return;
+            }
+
+            ram[addr] = val;
         }
     }
 }
