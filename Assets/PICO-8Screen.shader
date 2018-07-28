@@ -70,10 +70,11 @@
 				uint x = (uv.x) * 128;
 
 				if (x % 2 == 0) {
-					dualColor = dualColor >> 4;
+					dualColor = dualColor & 0x0f;
+					
 				}
 				else {
-					dualColor = dualColor & 0x0f;
+					dualColor = dualColor >> 4;
 				}
 				// Get color from palette
 				float2 cpUV = float2(0.0625 * dualColor, 0.5);

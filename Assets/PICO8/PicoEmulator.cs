@@ -15,7 +15,7 @@ namespace TsFreddie.Pico8
 
         // Northbridge
         MemoryModule memory;
-        PictureProcessingUnit ppu;
+        public PictureProcessingUnit ppu;
         AudioProcessingUnit apu;
 
         // Southbridge
@@ -24,25 +24,20 @@ namespace TsFreddie.Pico8
 
         // Exposed data
         public Texture2D Texture { get { return ppu.Texture; } }
-        public byte[] SCREEN { get { return memory.screen; } }
+        public byte[] SCREEN { get { return memory.VideoBuffer; } }
 
         #region PICO8API
-        double Rnd(double x) {
-            return random.NextDouble() * x;
+
+        int Btn(int b, int p = -1) {
+            return 0;
+        }
+
+        int Btnp(int b, int p = -1) {
+            return 0;
         }
 
         void RegisterAPIs()
         {
-            /*
-            engine.Globals["abs"] = (Func<double, double>)(x => Math.Abs(x));
-            engine.Globals["atan2"] = (Func<double, double, double>)((dx, dy) => 1 - Math.Atan2(dy, dx) / (2 * Math.PI));
-            engine.Globals["band"] = (Func<double, double, double>)((x, y) => ((int)(x * 65536) & (int)(y * 65536)) / 65536d);
-            engine.Globals["bnot"] = (Func<double, double>)(x => (~(int)(x * 65536)) / 65536d);
-            engine.Globals["bor"] = (Func<double, double, double>)((x, y) => ((int)(x * 65536) | (int)(y * 65536)) / 65536d);
-            engine.Globals["bxor"] = (Func<double, double, double>)((x, y) => ((int)(x * 65536) ^ (int)(y * 65536)) / 65536d);
-            engine.Globals["cos"] = (Func<double, double>)(x => (~(int)(x * 65536)) / 65536d);
-            */
-
             // C# & Lambda Implemented API
             Dictionary<String, object> apiTable = new Dictionary<String, object>()
             {
@@ -68,8 +63,54 @@ namespace TsFreddie.Pico8
                 #endregion
                 
                 #region MEMORY
-                { "peek", (Func<UInt16, byte>)memory.Peek },
-                { "poke", (Action<UInt16, byte>)memory.Poke },
+                { "peek", (Func<ushort, byte>)memory.Peek },
+                { "poke", (Action<ushort, byte>)memory.Poke },
+                { "memcpy", (Action<ushort, ushort, ushort>)memory.MemCpy },
+                { "memset", (Action<ushort, byte, ushort>)memory.MemSet },
+                #endregion
+
+                #region GRAPHICS
+                { "camera",  (Action<int,int>)ppu.Camera },
+                { "circ", (Action<int,int,int,byte>)ppu.Circ },
+                { "circfill", (Action<int,int,int,byte>)ppu.Circfill },
+                { "clip", (Action<int,int,int,int>)ppu.Clip },
+                { "cls", (Action)ppu.Cls },
+                { "color", (Action<byte>)ppu.Color },
+                { "cursor", (Action<int,int>)ppu.Cursor },
+                { "fget", (Func<int,byte,int>)ppu.Fget },
+                { "fillp", (Action<int>)ppu.Fillp },
+                { "fset", (Action<int,int,bool>)ppu.Fset },
+                { "line", (PictureProcessingUnit.APILine)ppu.Line },
+                { "pal",  (Action<byte,byte,byte>)ppu.Pal },
+                { "palt", (Action<byte, bool>)ppu.Palt },
+                { "pget", (Func<int,int,byte>)ppu.Pget },
+                { "print", (Action<string,int,int,byte>)ppu.Print },
+                { "pset", (Action<int,int,byte>)ppu.Pset },
+                { "rect", (PictureProcessingUnit.APIRect)ppu.Rect },
+                { "rectfill", (PictureProcessingUnit.APIRect)ppu.Rectfill },
+                { "sget", (Func<int,int,byte>)ppu.Sget },
+                { "spr",  (PictureProcessingUnit.APISpr)ppu.Spr },
+                { "sset", (Action<int,int,byte>)ppu.Sset },
+                { "sspr", (PictureProcessingUnit.APISspr)ppu.Sspr },
+
+                // MAP
+                { "map", (PictureProcessingUnit.APIMap)ppu.Map },
+                { "mget", (Func<int,int,byte>)ppu.Mget },
+                { "mset", (Action<int,int,byte>)ppu.Mset },
+                #endregion
+
+                #region INTERNAL
+                { "flip", (Action)ppu.Flip },
+                #endregion
+
+                #region MUSIC
+                { "music", (Action<int, int, int>)apu.Music },
+                { "sfx", (Action<int, int, int, int>)apu.Sfx },
+                #endregion
+
+                #region INPUT
+                { "btn", (Func<int, int, int>)Btn },
+                { "btnp", (Func<int, int, int>)Btnp },
                 #endregion
             };
 
@@ -112,6 +153,11 @@ namespace TsFreddie.Pico8
                     f(v)
                 end
             end
+
+            cocreate = coroutine.create
+            coresume = coroutine.resume
+            costatus = coroutine.status
+            yield = coroutine.yield
 
             ");
         }
@@ -276,12 +322,15 @@ namespace TsFreddie.Pico8
             // Copy to memory
             memory.CopyFromROM(cart.ROM, 0, 0x4300);
             Run(cart.ExtractScript()); 
+            if (engine.Globals["_init"] != null)
+                Call("_init");
         }
         public DynValue Call(string func, params DynValue[] args)
         {
             return engine.Call(engine.Globals[func], args);
         }
 
+        /* 
         public DynValue Run(string script)
         {
             Preprocess(ref script);
@@ -298,6 +347,12 @@ namespace TsFreddie.Pico8
                     return new DynValue();
             }
             return result;
+        }
+        */
+        public DynValue Run(string script)
+        {
+            Preprocess(ref script);
+            return engine.DoString(script);
         }
     }
 }

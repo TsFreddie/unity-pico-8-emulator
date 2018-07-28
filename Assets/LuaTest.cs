@@ -18,14 +18,14 @@ public class LuaTest : MonoBehaviour {
         // Load script
         processor.LoadCartridge(cart);
         // Coroutine Test
-        processor.Run(@"while true do dprint(4) end");
         mesh.material.SetTexture("_MainTex", processor.Texture);
     }
 	
 	// Update is called once per frame
 	void Update () {
-        processor.Run("poke(rnd(0x2000) + 0x6000, rnd(0xff))");
-        processor.Texture.LoadRawTextureData(processor.SCREEN);
-        processor.Texture.Apply();
+        processor.Call("_update");
+        //processor.Call("_draw");
+        processor.Run("flip()");
+        //processor.Run("poke(rnd(0x2000) + 0x6000, rnd(0xff)) flip()");
 	}
 }

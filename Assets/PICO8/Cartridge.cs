@@ -99,6 +99,7 @@ namespace TsFreddie.Pico8
             Debug.Log(rom[2]);
             Debug.Log(rom[3]);
             */
+            reader.End();
 
         }
         public void LoadFromUrl(string url)
@@ -110,14 +111,14 @@ namespace TsFreddie.Pico8
         {
             string script = "";
             int index = 0x4300;
-            while (index < ROM_SIZE || rom[index] != 0x00)
+            while (index < ROM_SIZE && rom[index] != 0x00)
             {
                 script += (char)rom[index];
                 index++;
             }
 
             // uncompressed code
-            if (script.Equals(":c:")) return script;
+            if (!script.Equals(":c:")) return script;
 
             int size = (rom[0x4304] << 8) + rom[0x4305];
             index = 0x4308;
