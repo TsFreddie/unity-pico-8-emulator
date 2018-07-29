@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using TsFreddie.Pico8;
 using UnityEngine;
+using System;
 
 public class LuaTest : MonoBehaviour {
 
@@ -19,14 +20,19 @@ public class LuaTest : MonoBehaviour {
         processor.LoadCartridge(cart);
         // Coroutine Test
         mesh.material.SetTexture("_MainTex", processor.Texture);
-        processor.Run("map(0,0,0,0,16,16,4)");
+        //processor.Run("dprint(fget(16))");
+        //processor.Run("dprint(fget(16, 4))");
+        #if UNITY_EDITOR
+            QualitySettings.vSyncCount = 0;  // VSync must be disabled
+        #endif
+        Application.targetFrameRate = 30;
     }
 	
 	// Update is called once per frame
 	void Update () {
-        //processor.Call("_update");
-        //processor.Call("_draw");
-        processor.Run("flip()");
+        processor.Call("_update");
+        processor.Call("_draw");
+        processor.ppu.Flip();
         //processor.Run("poke(rnd(0x2000) + 0x6000, rnd(0xff)) flip()");
 	}
 }

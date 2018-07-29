@@ -1,7 +1,9 @@
 ﻿using MoonSharp.Interpreter;
+using MoonSharp.VsCodeDebugger;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System;
+using System.IO;
 using FixedPointy;
 using UnityEngine;
 
@@ -29,10 +31,39 @@ namespace TsFreddie.Pico8
         #region PICO8API
 
         bool Btn(int b, int p = -1) {
+            switch (b){
+            case 0:
+                return Input.GetKey(KeyCode.A);
+            case 1:
+                return Input.GetKey(KeyCode.S);
+            case 2:
+                return Input.GetKey(KeyCode.W);
+            case 3:
+                return Input.GetKey(KeyCode.R);
+            case 4:
+                return Input.GetKey(KeyCode.N);
+            case 5:
+                return Input.GetKey(KeyCode.E);
+            }
+
             return false;
         }
 
         bool Btnp(int b, int p = -1) {
+            switch (b){
+            case 0:
+                return Input.GetKeyDown(KeyCode.A);
+            case 1:
+                return Input.GetKeyDown(KeyCode.S);
+            case 2:
+                return Input.GetKeyDown(KeyCode.W);
+            case 3:
+                return Input.GetKeyDown(KeyCode.R);
+            case 4:
+                return Input.GetKeyDown(KeyCode.N);
+            case 5:
+                return Input.GetKeyDown(KeyCode.E);
+            }
             return false;
         }
 
@@ -152,6 +183,10 @@ namespace TsFreddie.Pico8
                 for k, v in pairs(t) do
                     f(v)
                 end
+            end
+
+            function count(t)
+                return #t
             end
 
             cocreate = coroutine.create
@@ -321,7 +356,14 @@ namespace TsFreddie.Pico8
             cartridge = cart;
             // Copy to memory
             memory.CopyFromROM(cart.ROM, 0, 0x4300);
-            Run(cart.ExtractScript()); 
+            #if UNITY_EDITOR
+                // lua debugger
+                var server = new MoonSharpVsCodeDebugServer();
+                server.Start();
+                server.AttachToScript(engine, "code");
+            #endif
+            string script = cart.ExtractScript();
+            Run(script); 
             if (engine.Globals["_init"] != null)
                 Call("_init");
         }
@@ -352,6 +394,7 @@ namespace TsFreddie.Pico8
         public DynValue Run(string script)
         {
             Preprocess(ref script);
+            //return engine.DoFile("fact.lua");
             return engine.DoString(script);
         }
     }

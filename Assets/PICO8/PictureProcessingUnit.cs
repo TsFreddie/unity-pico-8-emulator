@@ -81,7 +81,6 @@ namespace TsFreddie.Pico8
         public byte Sget(int x, int y) { return 0; }
         public void Sset(int x, int y, byte c = 0) {}
         public void Sspr(int sx, int sy, int sw, int sh, int dx, int dy, int dw = 0, int dh = 0, bool flip_x = false, bool flip_y = false) {}
-        public byte Mget(int x, int y) { return 0; }
         public void Mset(int x, int y, byte v) {}
 
 #endregion
@@ -92,7 +91,15 @@ namespace TsFreddie.Pico8
             Pen = (byte)(col & 0xf);
         }
         public DynValue Fget(int n, byte? f) {
-            return null;
+            byte flag = Fget(n);
+            if (!f.HasValue) {
+                return DynValue.NewNumber(flag);
+            }
+            byte mask = (byte)(1 << f.Value);
+            return DynValue.NewBoolean((flag & mask) > 0);
+        }
+        public byte Fget(int n) {
+            return memory.Peek((ushort)(MemoryModule.BYTE_TABLE.FLAGS + n));
         }
         public void Rect(int x0, int y0, int x1, int y1, int? col) {
             Color(col);
@@ -166,17 +173,27 @@ namespace TsFreddie.Pico8
                     cy -= 32;
                 }
                 for (int cx = cel_x; cx < cel_x1; cx++) {
-                    //Debug.Log(cx);
-                    //Debug.Log(cy);
                     if (cx < 0 || cx >= 128) continue;
                     ushort mem_offset = (ushort)(map_offset + cy*128+cx);
                     int spr_n = memory.Peek(mem_offset);
-                    //Debug.Log(mem_offset);
-                    //Debug.Log(spr_n);
-                    //return;
+                    byte flag = Fget(spr_n);
+                    if ((flag & layer) != layer) {
+                        continue;
+                    }
                     Spr(spr_n, sx + (cx-cel_x) * 8, sy + (cy_i-cel_y) * 8);
                 }
             }
+        }
+        public byte Mget(int x = 0, int y = 0) {
+            if (x < 0 || x >= 128 || y < 0 || y >= 128) return 0;
+            ushort map_offset = (ushort)MemoryModule.BYTE_TABLE.MAP;
+            if (y >= 32) {
+                map_offset = (ushort)MemoryModule.BYTE_TABLE.SHARED;
+                y -= 32;
+            }
+            ushort mem_offset = (ushort)(map_offset + y*128+x);
+            byte spr = memory.Peek(mem_offset);
+            return spr;
         }
 #endregion
     }
