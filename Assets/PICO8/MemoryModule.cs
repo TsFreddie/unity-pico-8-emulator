@@ -11,7 +11,8 @@ namespace TsFreddie.Pico8
     {
         public enum BYTE_TABLE : int {
             SPRITE = 0x0,
-            MAP = 0x1000,
+            SHARED = 0x1000,
+            MAP = 0x2000,
             FLAGS = 0x3000,
             MUSIC = 0x3100,
             SOUND = 0x3200,

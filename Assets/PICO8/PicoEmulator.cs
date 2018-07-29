@@ -28,12 +28,12 @@ namespace TsFreddie.Pico8
 
         #region PICO8API
 
-        int Btn(int b, int p = -1) {
-            return 0;
+        bool Btn(int b, int p = -1) {
+            return false;
         }
 
-        int Btnp(int b, int p = -1) {
-            return 0;
+        bool Btnp(int b, int p = -1) {
+            return false;
         }
 
         void RegisterAPIs()
@@ -71,21 +71,21 @@ namespace TsFreddie.Pico8
 
                 #region GRAPHICS
                 { "camera",  (Action<int,int>)ppu.Camera },
-                { "circ", (Action<int,int,int,byte>)ppu.Circ },
-                { "circfill", (Action<int,int,int,byte>)ppu.Circfill },
+                { "circ", (Action<int,int,int,int>)ppu.Circ },
+                { "circfill", (Action<int,int,int,int>)ppu.Circfill },
                 { "clip", (Action<int,int,int,int>)ppu.Clip },
                 { "cls", (Action)ppu.Cls },
-                { "color", (Action<byte>)ppu.Color },
+                { "color", (Action<Nullable<int>>)ppu.Color },
                 { "cursor", (Action<int,int>)ppu.Cursor },
-                { "fget", (Func<int,byte,int>)ppu.Fget },
+                { "fget", (Func<int,byte?,DynValue>)ppu.Fget },
                 { "fillp", (Action<int>)ppu.Fillp },
                 { "fset", (Action<int,int,bool>)ppu.Fset },
                 { "line", (PictureProcessingUnit.APILine)ppu.Line },
                 { "pal",  (Action<byte,byte,byte>)ppu.Pal },
                 { "palt", (Action<byte, bool>)ppu.Palt },
                 { "pget", (Func<int,int,byte>)ppu.Pget },
-                { "print", (Action<string,int,int,byte>)ppu.Print },
-                { "pset", (Action<int,int,byte>)ppu.Pset },
+                { "print", (Action<string,int,int,int>)ppu.Print },
+                { "pset", (Action<int,int,int>)ppu.Pset },
                 { "rect", (PictureProcessingUnit.APIRect)ppu.Rect },
                 { "rectfill", (PictureProcessingUnit.APIRect)ppu.Rectfill },
                 { "sget", (Func<int,int,byte>)ppu.Sget },
@@ -109,8 +109,8 @@ namespace TsFreddie.Pico8
                 #endregion
 
                 #region INPUT
-                { "btn", (Func<int, int, int>)Btn },
-                { "btnp", (Func<int, int, int>)Btnp },
+                { "btn", (Func<int, int, bool>)Btn },
+                { "btnp", (Func<int, int, bool>)Btnp },
                 #endregion
             };
 
