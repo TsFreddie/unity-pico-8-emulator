@@ -6,24 +6,38 @@ using System;
 using System.IO;
 using FixedPointy;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace TsFreddie.Pico8
 {
     public class PicoEmulator
     {
+        public enum Buttons : int {
+            LEFT = 0,
+            RIGHT,
+            UP,
+            DOWN,
+            CIRCLE,
+            CROSS,
+            PAUSE,
+            UNDEFINED,
+        }
+
         Script engine;
         System.Random random;
         const double FRAC = 65536;
 
         // Northbridge
         MemoryModule memory;
-        public PictureProcessingUnit ppu;
+        PictureProcessingUnit ppu;
         AudioProcessingUnit apu;
 
         // Southbridge
         Cartridge cartridge;
         CartridgeData cartdata;
-
+        bool[] lastButtons;
+        bool[] buttons;
+        CustomSampler sampler = CustomSampler.Create("Foreach");
         // Exposed data
         public Texture2D Texture { get { return ppu.Texture; } }
         public byte[] SCREEN { get { return memory.VideoBuffer; } }
@@ -31,40 +45,41 @@ namespace TsFreddie.Pico8
         #region PICO8API
 
         bool Btn(int b, int p = -1) {
-            switch (b){
-            case 0:
-                return Input.GetKey(KeyCode.A);
-            case 1:
-                return Input.GetKey(KeyCode.S);
-            case 2:
-                return Input.GetKey(KeyCode.W);
-            case 3:
-                return Input.GetKey(KeyCode.R);
-            case 4:
-                return Input.GetKey(KeyCode.N);
-            case 5:
-                return Input.GetKey(KeyCode.E);
-            }
-
-            return false;
+            return buttons[b];
         }
 
         bool Btnp(int b, int p = -1) {
-            switch (b){
-            case 0:
-                return Input.GetKeyDown(KeyCode.A);
-            case 1:
-                return Input.GetKeyDown(KeyCode.S);
-            case 2:
-                return Input.GetKeyDown(KeyCode.W);
-            case 3:
-                return Input.GetKeyDown(KeyCode.R);
-            case 4:
-                return Input.GetKeyDown(KeyCode.N);
-            case 5:
-                return Input.GetKeyDown(KeyCode.E);
+            return buttons[b] && !lastButtons[b];
+        }
+
+        void Del(Table t, DynValue dv) {
+            int len = t.Length;
+            for (int i = 1; i <= len; i++) {
+                if (t.Get(i).Equals(dv)) {
+                    for (int j = i + 1; j <= len; j++) {
+                        t.Set(j-1, t.Get(j));
+                    }
+                    t.Remove(len);
+                    return;
+                }
             }
-            return false;
+        }
+
+        void Foreach(ScriptExecutionContext context, Table t, DynValue f) {
+            sampler.Begin();
+            if (t == null) return;
+            
+            if (f.Type == DataType.Function) {
+                for (int i = 1; i <= t.Length; i++) {
+                    f.Function.Call(t.Get(i));
+                }
+            }
+            else if (f.Type == DataType.ClrFunction) {
+                for (int i = 1; i <= t.Length; i++) {
+                    f.Callback.ClrCallback(context, new CallbackArguments(new DynValue[1]{t.Get(i)}, false));
+                }
+            }
+            sampler.End();
         }
 
         void RegisterAPIs()
@@ -90,7 +105,6 @@ namespace TsFreddie.Pico8
                 { "sin", (Func<double, double>)(x => -Math.Sin(x * 2 * Math.PI)) },
                 { "sqrt", (Func<double, double>)Math.Sqrt },
                 { "srand", (Action<double>)(x => random = new System.Random((int)(x * FRAC))) },
-                { "dprint", (Action<object>)(x => Debug.Log(x)) },
                 #endregion
                 
                 #region MEMORY
@@ -132,6 +146,7 @@ namespace TsFreddie.Pico8
 
                 #region INTERNAL
                 { "flip", (Action)ppu.Flip },
+                { "dprint", (Action<object>)(x => Debug.Log(x)) },
                 #endregion
 
                 #region MUSIC
@@ -142,6 +157,13 @@ namespace TsFreddie.Pico8
                 #region INPUT
                 { "btn", (Func<int, int, bool>)Btn },
                 { "btnp", (Func<int, int, bool>)Btnp },
+                #endregion
+
+                #region TABLE
+                { "add", (Action<Table, DynValue>)((t, v) => t.Append(v)) },
+                { "del", (Action<Table, DynValue>)Del },
+                { "foreach", (Action<ScriptExecutionContext, Table, DynValue>)Foreach },
+                { "count", (Func<Table, int>)(t => t.Length) },
                 #endregion
             };
 
@@ -156,10 +178,6 @@ namespace TsFreddie.Pico8
                 if (type(x) == ""number"") return tostring(math.floor(x*10000)/10000)
                 return tostring(x)
             end
-            
-            function add(t, v)
-                table.insert(t, v)
-            end
 
             function all(t)
                 local i = 0
@@ -169,24 +187,6 @@ namespace TsFreddie.Pico8
                         i = i + 1
                         if i <= n then return t[i] end
                     end
-            end
-
-            function del(t, dv)
-                local pos = -1
-                for i, v in ipairs(t) do
-                    if (v == dv) pos = i break
-                end
-                if (pos >= 0) table.remove(t, pos)
-            end
-            
-            function foreach(t, f)
-                for k, v in pairs(t) do
-                    f(v)
-                end
-            end
-
-            function count(t)
-                return #t
             end
 
             cocreate = coroutine.create
@@ -346,6 +346,8 @@ namespace TsFreddie.Pico8
             memory = new MemoryModule();
             ppu = new PictureProcessingUnit(memory);
             apu = new AudioProcessingUnit();
+            buttons = new bool[(int)Buttons.UNDEFINED];
+            lastButtons = new bool[(int)Buttons.UNDEFINED];
             // Random seed
             random = new System.Random();
             // Register APIs
@@ -396,6 +398,27 @@ namespace TsFreddie.Pico8
             Preprocess(ref script);
             //return engine.DoFile("fact.lua");
             return engine.DoString(script);
+        }
+
+        public void SendInput(Buttons button) {
+            buttons[(int)button] = true;
+        }
+
+        public void Update() {
+            if (engine.Globals["_update"] != null)
+                Call("_update");
+            if (engine.Globals["_draw"] != null)
+                Call("_draw");
+            ppu.Flip();
+
+            // TODO: in memory?
+            bool[] tmp = lastButtons;
+            lastButtons = buttons;
+            buttons = tmp;
+
+            for (int i = 0; i < (int)Buttons.UNDEFINED; i++) {
+                buttons[i] = false;
+            }
         }
     }
 }

@@ -74,9 +74,9 @@ namespace TsFreddie.Pico8
         {
         }
 
-        public void LoadFromP8PNG(string filename)
+        public void LoadFromP8PNG(Stream stream)
         {
-            PngReader reader = new PngReader(new FileStream(filename, FileMode.Open));
+            PngReader reader = new PngReader(stream);
             if (!validatePNG(reader.ImgInfo))
                 throw new BadImageFormatException("Bad Cart");
 
