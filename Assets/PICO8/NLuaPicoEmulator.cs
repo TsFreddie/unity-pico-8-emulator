@@ -353,9 +353,11 @@ namespace TsFreddie.Pico8
             // Copy to memory
             memory.CopyFromROM(cart.ROM, 0, 0x4300);
             string script = cart.ExtractScript();
+            /* 
             StreamWriter writer = new StreamWriter(new FileStream("script.lua", FileMode.Create));
             writer.Write(script);
             writer.Close();
+            */
             Run(script); 
             if (engine["_init"] != null)
                 Call("_init");

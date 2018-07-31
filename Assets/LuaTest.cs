@@ -13,7 +13,7 @@ public class LuaTest : MonoBehaviour {
     // Use this for initialization
     void Start () {
         //int dis = Screen.currentResolution.refreshRate;
-        QualitySettings.vSyncCount = 4;
+        QualitySettings.vSyncCount = 2;
 
         Cartridge cart = new Cartridge();
         
