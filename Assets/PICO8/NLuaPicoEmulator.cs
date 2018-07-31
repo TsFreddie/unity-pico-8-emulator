@@ -140,47 +140,43 @@ namespace TsFreddie.Pico8
                 return tostring(x)
             end
 
-            function del(a,dv)
-                if a == nil then
-                    return
-                end
-                for i,v in ipairs(a) do
-                    if v==dv then
-                        table.remove(a,i)
+            function del(t, dv)
+                if (t == nil) return
+                for i=1, #t do
+                    if t[i] == dv then
+                        table.remove(t, i)
+                        return
                     end
                 end
             end
 
-            function add(a,v)
-                if a == nil then
-                    return
-                end
-                table.insert(a,v)
+            function add(t,v)
+                if (t == nil) return
+                table.insert(t,v)
             end
 
-            function foreach(a,f)
-                if not a then
-                    return
-                end
-                for i,v in ipairs(a) do
+            function foreach(t,f)
+                for v in all(t) do
                     f(v)
                 end
             end
 
             function all(t)
-                local i = 0
-                local n = #t
-                return
-                    function ()
-                        i = i + 1
-                        if i <= n then return t[i] end
-                    end
+                if (t == nil or #t == 0) return function() end
+                local i, li=1
+                return function()
+                    if (t[i]==li) then i=i+1 end
+                    while(t[i]==nil and i<=#t) do i=i+1 end
+                    li=t[i]
+                    return t[i]
+                end
             end
 
-            function count(a)
-	            return #a
+            function count(t)
+	            return #t
             end
 
+            sub = string.sub
             cocreate = coroutine.create
             coresume = coroutine.resume
             costatus = coroutine.status
