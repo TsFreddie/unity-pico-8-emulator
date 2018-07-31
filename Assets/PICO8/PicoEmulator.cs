@@ -397,7 +397,8 @@ namespace TsFreddie.Pico8
         {
             Preprocess(ref script);
             //return engine.DoFile("fact.lua");
-            return engine.DoString(script);
+            DynValue result = engine.DoString(script);
+            return result;
         }
 
         public void SendInput(Buttons button) {
