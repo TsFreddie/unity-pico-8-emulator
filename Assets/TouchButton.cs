@@ -4,7 +4,7 @@ using UnityEngine;
 using TsFreddie.Pico8;
 
 public class TouchButton : MonoBehaviour {
-	public NLuaPicoEmulator.Buttons button;
+	public PicoEmulator.Buttons button;
 
 	void Start () {
 

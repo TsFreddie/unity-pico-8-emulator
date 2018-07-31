@@ -465,7 +465,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 952a3e0c1bcdcaf44b8ee8e7cfa23e81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  filename: https://www.lexaloffle.com/bbs/cposts/1/15133.p8.png
+  filename: C:\Users\TsFreddie\AppData\Roaming\pico-8\bbs\1\15133.p8.png
   mesh: {fileID: 1101922554}
 --- !u!114 &902407656
 MonoBehaviour:
