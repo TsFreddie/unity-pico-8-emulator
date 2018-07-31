@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Collections;
-using MoonSharp.Interpreter;
 
 namespace TsFreddie.Pico8
 {
@@ -90,13 +89,13 @@ namespace TsFreddie.Pico8
             if (!col.HasValue) return;
             Pen = (byte)(col & 0xf);
         }
-        public DynValue Fget(int n, byte? f) {
+        public object Fget(int n, byte? f) {
             byte flag = Fget(n);
             if (!f.HasValue) {
-                return DynValue.NewNumber(flag);
+                return flag;
             }
             byte mask = (byte)(1 << f.Value);
-            return DynValue.NewBoolean((flag & mask) > 0);
+            return ((flag & mask) > 0);
         }
         public byte Fget(int n) {
             return memory.Peek((ushort)(MemoryModule.BYTE_TABLE.FLAGS + n));

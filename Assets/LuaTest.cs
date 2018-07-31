@@ -9,7 +9,7 @@ public class LuaTest : MonoBehaviour {
 
     public string filename;
     public MeshRenderer mesh;
-    PicoEmulator processor;
+    NLuaPicoEmulator processor;
     // Use this for initialization
     void Start () {
         //int dis = Screen.currentResolution.refreshRate;
@@ -17,7 +17,7 @@ public class LuaTest : MonoBehaviour {
 
         Cartridge cart = new Cartridge();
         
-        processor = new PicoEmulator();
+        processor = new NLuaPicoEmulator();
         WWW www = new WWW(filename);
 
         while(!www.isDone);
@@ -72,12 +72,12 @@ end");*/
 			}
 		}
 
-        if (Input.GetKey(KeyCode.N)) processor.SendInput(PicoEmulator.Buttons.CIRCLE);
-        if (Input.GetKey(KeyCode.E)) processor.SendInput(PicoEmulator.Buttons.CROSS);
-        if (Input.GetKey(KeyCode.W)) processor.SendInput(PicoEmulator.Buttons.UP);
-        if (Input.GetKey(KeyCode.A)) processor.SendInput(PicoEmulator.Buttons.LEFT);
-        if (Input.GetKey(KeyCode.S)) processor.SendInput(PicoEmulator.Buttons.RIGHT);
-        if (Input.GetKey(KeyCode.D)) processor.SendInput(PicoEmulator.Buttons.DOWN);
+        if (Input.GetKey(KeyCode.N)) processor.SendInput(NLuaPicoEmulator.Buttons.CIRCLE);
+        if (Input.GetKey(KeyCode.E)) processor.SendInput(NLuaPicoEmulator.Buttons.CROSS);
+        if (Input.GetKey(KeyCode.W)) processor.SendInput(NLuaPicoEmulator.Buttons.UP);
+        if (Input.GetKey(KeyCode.A)) processor.SendInput(NLuaPicoEmulator.Buttons.LEFT);
+        if (Input.GetKey(KeyCode.S)) processor.SendInput(NLuaPicoEmulator.Buttons.RIGHT);
+        if (Input.GetKey(KeyCode.D)) processor.SendInput(NLuaPicoEmulator.Buttons.DOWN);
         processor.Update();
 	}
 }
