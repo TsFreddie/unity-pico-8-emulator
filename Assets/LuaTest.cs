@@ -13,10 +13,10 @@ public class LuaTest : MonoBehaviour {
     // Use this for initialization
     void Start () {
         //int dis = Screen.currentResolution.refreshRate;
-        QualitySettings.vSyncCount = 2;
+        //QualitySettings.vSyncCount = 2;
 
         Cartridge cart = new Cartridge();
-        
+
         processor = new NLuaPicoEmulator();
         /* 
         WWW www = new WWW(filename);
@@ -27,10 +27,14 @@ public class LuaTest : MonoBehaviour {
         */
 
         cart.LoadFromP8PNG(new FileStream(filename, FileMode.Open));
+        processor.Run("srand(100)");
+        //processor2.Run("srand(100)");
         // Load script
         processor.LoadCartridge(cart);
+        //processor2.LoadCartridge(cart);
 
         mesh.material.SetTexture("_MainTex", processor.Texture);
+        //mesh2.material.SetTexture("_MainTex", processor2.Texture);
         /* 
         processor.Run(@"a = {5,6} b = {""haha""}");
         processor.Run(@"add(a, b)");
@@ -55,12 +59,13 @@ public class LuaTest : MonoBehaviour {
 	else
 		load_room(room.x+1,room.y)
 	end
-end");*/
+end");
         
         #if UNITY_EDITOR
-            //QualitySettings.vSyncCount = 0;  // VSync must be disabled
+            QualitySettings.vSyncCount = 0;  // VSync must be disabled
         #endif
-        //Application.targetFrameRate = 15;
+        Application.targetFrameRate = 30;
+        */
     }
 
 	void Update () {
@@ -75,12 +80,13 @@ end");*/
 			}
 		}
 
-        if (Input.GetKey(KeyCode.N)) processor.SendInput(PicoEmulator.Buttons.CIRCLE);
-        if (Input.GetKey(KeyCode.E)) processor.SendInput(PicoEmulator.Buttons.CROSS);
-        if (Input.GetKey(KeyCode.W)) processor.SendInput(PicoEmulator.Buttons.UP);
-        if (Input.GetKey(KeyCode.A)) processor.SendInput(PicoEmulator.Buttons.LEFT);
-        if (Input.GetKey(KeyCode.S)) processor.SendInput(PicoEmulator.Buttons.RIGHT);
-        if (Input.GetKey(KeyCode.D)) processor.SendInput(PicoEmulator.Buttons.DOWN);
+        if (Input.GetKey(KeyCode.N)) processor.SendInput(PicoEmulator.Buttons.CIRCLE); //processor2.SendInput(PicoEmulator.Buttons.CIRCLE); }
+        if (Input.GetKey(KeyCode.E)) processor.SendInput(PicoEmulator.Buttons.CROSS); //processor2.SendInput(PicoEmulator.Buttons.CROSS); }
+        if (Input.GetKey(KeyCode.W)) processor.SendInput(PicoEmulator.Buttons.UP); //processor2.SendInput(PicoEmulator.Buttons.UP); }
+        if (Input.GetKey(KeyCode.A)) processor.SendInput(PicoEmulator.Buttons.LEFT); //processor2.SendInput(PicoEmulator.Buttons.LEFT); }
+        if (Input.GetKey(KeyCode.S)) processor.SendInput(PicoEmulator.Buttons.RIGHT); //processor2.SendInput(PicoEmulator.Buttons.RIGHT); }
+        if (Input.GetKey(KeyCode.D)) processor.SendInput(PicoEmulator.Buttons.DOWN); //processor2.SendInput(PicoEmulator.Buttons.DOWN); }
         processor.Update();
+        //processor2.Update();
 	}
 }

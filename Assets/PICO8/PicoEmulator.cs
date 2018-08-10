@@ -13,7 +13,7 @@ namespace TsFreddie.Pico8
 
 		// Northbridge
         protected MemoryModule memory;
-        protected PictureProcessingUnit ppu;
+        public PictureProcessingUnit ppu;
         protected AudioProcessingUnit apu;
 
 		// Southbridge
@@ -40,6 +40,8 @@ namespace TsFreddie.Pico8
 		protected PicoEmulator() {
 			InitializeLuaEngine();
 			memory = new MemoryModule();
+            memory.InitializeStates();
+
             ppu = new PictureProcessingUnit(memory);
             apu = new AudioProcessingUnit();
 			buttons = new bool[(int)Buttons.UNDEFINED];
@@ -81,29 +83,29 @@ namespace TsFreddie.Pico8
                 #endregion
                 
                 #region MEMORY
-                { "peek", (Func<ushort, byte>)memory.Peek },
-                { "poke", (Action<ushort, byte>)memory.Poke },
-                { "memcpy", (Action<ushort, ushort, ushort>)memory.MemCpy },
-                { "memset", (Action<ushort, byte, ushort>)memory.MemSet },
+                { "peek", (Func<int, byte>)memory.Peek },
+                { "poke", (Action<int, byte>)memory.Poke },
+                { "memcpy", (Action<int, int, int>)memory.MemCpy },
+                { "memset", (Action<int, byte, int>)memory.MemSet },
                 #endregion
 
                 #region GRAPHICS
                 { "camera",  (Action<int,int>)ppu.Camera },
-                { "circ", (Action<int,int,int,int>)ppu.Circ },
-                { "circfill", (Action<int,int,int,int>)ppu.Circfill },
+                { "circ", (Action<int?,int?,int,int?>)ppu.Circ },
+                { "circfill", (Action<int?,int?,int,int?>)ppu.Circfill },
                 { "clip", (Action<int,int,int,int>)ppu.Clip },
                 { "cls", (Action)ppu.Cls },
-                { "color", (Action<Nullable<int>>)ppu.Color },
+                { "color", (Action<int>)ppu.Color },
                 { "cursor", (Action<int,int>)ppu.Cursor },
                 { "fget", (Func<int,byte?,object>)ppu.Fget },
                 { "fillp", (Action<int>)ppu.Fillp },
-                { "fset", (Action<int,int,bool>)ppu.Fset },
+                { "fset", (Action<int,byte?,bool?>)ppu.Fset },
                 { "line", (PictureProcessingUnit.APILine)ppu.Line },
-                { "pal",  (Action<byte,byte,byte>)ppu.Pal },
-                { "palt", (Action<byte, bool>)ppu.Palt },
-                { "pget", (Func<int,int,byte>)ppu.Pget },
-                { "print", (Action<string,int,int,int>)ppu.Print },
-                { "pset", (Action<int,int,int>)ppu.Pset },
+                { "pal",  (Action<int,byte?,byte>)ppu.Pal },
+                { "palt", (Action<byte,bool?>)ppu.Palt },
+                { "pget", (Func<int?,int?,byte>)ppu.Pget },
+                { "print", (Action<string,int?,int?,int?>)ppu.Print },
+                { "pset", (Action<int?,int?,int?>)ppu.Pset },
                 { "rect", (PictureProcessingUnit.APIRect)ppu.Rect },
                 { "rectfill", (PictureProcessingUnit.APIRect)ppu.Rectfill },
                 { "sget", (Func<int,int,byte>)ppu.Sget },
