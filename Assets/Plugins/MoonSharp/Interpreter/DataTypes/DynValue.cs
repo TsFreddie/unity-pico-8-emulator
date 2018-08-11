@@ -111,7 +111,7 @@ namespace MoonSharp.Interpreter
 		{
 			return new DynValue()
 			{
-				m_Number = num,
+				m_Number = (int)(num * 65536) / 65536.0d,
 				m_Type = DataType.Number,
 				m_HashCode = -1,
 			};

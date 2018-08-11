@@ -1,73 +1,63 @@
-﻿using MoonSharp.Interpreter;
-using MoonSharp.VsCodeDebugger;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System;
-using System.IO;
-using FixedPointy;
 using UnityEngine;
 
 namespace TsFreddie.Pico8
 {
-    public class PicoEmulator
-    {
-        Script engine;
-        System.Random random;
-        const double FRAC = 65536;
+	public abstract class PicoEmulator {
+		public const double FRAC = 65536;
+	
+		protected System.Random random;
 
-        // Northbridge
-        MemoryModule memory;
+		// Northbridge
+        protected MemoryModule memory;
         public PictureProcessingUnit ppu;
-        AudioProcessingUnit apu;
+        protected AudioProcessingUnit apu;
 
-        // Southbridge
-        Cartridge cartridge;
-        CartridgeData cartdata;
+		// Southbridge
+        protected Cartridge cartridge;
+        protected CartridgeData cartdata;
+        bool[] lastButtons;
+        bool[] buttons;
 
-        // Exposed data
+		// Exposed data
         public Texture2D Texture { get { return ppu.Texture; } }
         public byte[] SCREEN { get { return memory.VideoBuffer; } }
 
-        #region PICO8API
-
-        bool Btn(int b, int p = -1) {
-            switch (b){
-            case 0:
-                return Input.GetKey(KeyCode.A);
-            case 1:
-                return Input.GetKey(KeyCode.S);
-            case 2:
-                return Input.GetKey(KeyCode.W);
-            case 3:
-                return Input.GetKey(KeyCode.R);
-            case 4:
-                return Input.GetKey(KeyCode.N);
-            case 5:
-                return Input.GetKey(KeyCode.E);
-            }
-
-            return false;
+		public enum Buttons : int {
+            LEFT = 0,
+            RIGHT,
+            UP,
+            DOWN,
+            CIRCLE,
+            CROSS,
+            PAUSE,
+            UNDEFINED,
         }
 
-        bool Btnp(int b, int p = -1) {
-            switch (b){
-            case 0:
-                return Input.GetKeyDown(KeyCode.A);
-            case 1:
-                return Input.GetKeyDown(KeyCode.S);
-            case 2:
-                return Input.GetKeyDown(KeyCode.W);
-            case 3:
-                return Input.GetKeyDown(KeyCode.R);
-            case 4:
-                return Input.GetKeyDown(KeyCode.N);
-            case 5:
-                return Input.GetKeyDown(KeyCode.E);
-            }
-            return false;
-        }
+		protected PicoEmulator() {
+			InitializeLuaEngine();
+			memory = new MemoryModule();
+            memory.InitializeStates();
 
-        void RegisterAPIs()
+            ppu = new PictureProcessingUnit(memory);
+            apu = new AudioProcessingUnit(memory, 48000);
+			buttons = new bool[(int)Buttons.UNDEFINED];
+            lastButtons = new bool[(int)Buttons.UNDEFINED];
+			
+            // Random seed
+            random = new System.Random();
+
+            // Register APIs
+			RegisterAPIs();
+		}
+		
+		protected abstract void InitializeLuaEngine();
+		protected abstract void RegisterAPI(String apiName, object func);
+		
+        private void RegisterAPIs()
         {
             // C# & Lambda Implemented API
             Dictionary<String, object> apiTable = new Dictionary<String, object>()
@@ -90,33 +80,32 @@ namespace TsFreddie.Pico8
                 { "sin", (Func<double, double>)(x => -Math.Sin(x * 2 * Math.PI)) },
                 { "sqrt", (Func<double, double>)Math.Sqrt },
                 { "srand", (Action<double>)(x => random = new System.Random((int)(x * FRAC))) },
-                { "dprint", (Action<object>)(x => Debug.Log(x)) },
                 #endregion
                 
                 #region MEMORY
-                { "peek", (Func<ushort, byte>)memory.Peek },
-                { "poke", (Action<ushort, byte>)memory.Poke },
-                { "memcpy", (Action<ushort, ushort, ushort>)memory.MemCpy },
-                { "memset", (Action<ushort, byte, ushort>)memory.MemSet },
+                { "peek", (Func<int, byte>)memory.Peek },
+                { "poke", (Action<int, byte>)memory.Poke },
+                { "memcpy", (Action<int, int, int>)memory.MemCpy },
+                { "memset", (Action<int, byte, int>)memory.MemSet },
                 #endregion
 
                 #region GRAPHICS
                 { "camera",  (Action<int,int>)ppu.Camera },
-                { "circ", (Action<int,int,int,int>)ppu.Circ },
-                { "circfill", (Action<int,int,int,int>)ppu.Circfill },
+                { "circ", (Action<int?,int?,int,int?>)ppu.Circ },
+                { "circfill", (Action<int?,int?,int,int?>)ppu.Circfill },
                 { "clip", (Action<int,int,int,int>)ppu.Clip },
                 { "cls", (Action)ppu.Cls },
-                { "color", (Action<Nullable<int>>)ppu.Color },
+                { "color", (Action<int>)ppu.Color },
                 { "cursor", (Action<int,int>)ppu.Cursor },
-                { "fget", (Func<int,byte?,DynValue>)ppu.Fget },
+                { "fget", (Func<int,byte?,object>)ppu.Fget },
                 { "fillp", (Action<int>)ppu.Fillp },
-                { "fset", (Action<int,int,bool>)ppu.Fset },
+                { "fset", (Action<int,byte?,bool?>)ppu.Fset },
                 { "line", (PictureProcessingUnit.APILine)ppu.Line },
-                { "pal",  (Action<byte,byte,byte>)ppu.Pal },
-                { "palt", (Action<byte, bool>)ppu.Palt },
-                { "pget", (Func<int,int,byte>)ppu.Pget },
-                { "print", (Action<string,int,int,int>)ppu.Print },
-                { "pset", (Action<int,int,int>)ppu.Pset },
+                { "pal",  (Action<int,byte?,byte>)ppu.Pal },
+                { "palt", (Action<byte,bool?>)ppu.Palt },
+                { "pget", (Func<int?,int?,byte>)ppu.Pget },
+                { "print", (Action<string,int?,int?,int?>)ppu.Print },
+                { "pset", (Action<int?,int?,int?>)ppu.Pset },
                 { "rect", (PictureProcessingUnit.APIRect)ppu.Rect },
                 { "rectfill", (PictureProcessingUnit.APIRect)ppu.Rectfill },
                 { "sget", (Func<int,int,byte>)ppu.Sget },
@@ -132,6 +121,7 @@ namespace TsFreddie.Pico8
 
                 #region INTERNAL
                 { "flip", (Action)ppu.Flip },
+                { "dprint", (Action<object>)(x => Debug.Log(x)) },
                 #endregion
 
                 #region MUSIC
@@ -147,7 +137,7 @@ namespace TsFreddie.Pico8
 
             foreach (var api in apiTable)
             {
-                engine.Globals[api.Key] = api.Value;
+                RegisterAPI(api.Key, api.Value);
             }
 
             // Lua Implemented API
@@ -156,39 +146,44 @@ namespace TsFreddie.Pico8
                 if (type(x) == ""number"") return tostring(math.floor(x*10000)/10000)
                 return tostring(x)
             end
-            
-            function add(t, v)
-                table.insert(t, v)
-            end
-
-            function all(t)
-                local i = 0
-                local n = #t
-                return
-                    function ()
-                        i = i + 1
-                        if i <= n then return t[i] end
-                    end
-            end
 
             function del(t, dv)
-                local pos = -1
-                for i, v in ipairs(t) do
-                    if (v == dv) pos = i break
+                if (t == nil) return
+                for i=1, #t do
+                    if t[i] == dv then
+                        table.remove(t, i)
+                        return
+                    end
                 end
-                if (pos >= 0) table.remove(t, pos)
             end
-            
-            function foreach(t, f)
-                for k, v in pairs(t) do
+
+            function add(t,v)
+                if (t == nil) return
+                table.insert(t,v)
+            end
+
+            function foreach(t,f)
+                for v in all(t) do
                     f(v)
                 end
             end
 
-            function count(t)
-                return #t
+            function all(t)
+                if (t == nil or #t == 0) return function() end
+                local i, li=1
+                return function()
+                    if (t[i]==li) then i=i+1 end
+                    while(t[i]==nil and i<=#t) do i=i+1 end
+                    li=t[i]
+                    return t[i]
+                end
             end
 
+            function count(t)
+	            return #t
+            end
+
+            sub = string.sub
             cocreate = coroutine.create
             coresume = coroutine.resume
             costatus = coroutine.status
@@ -197,9 +192,8 @@ namespace TsFreddie.Pico8
             ");
         }
 
-        #endregion
-        #region PICO8SYNTAX
-        private string IfShorthandMatch(Match match)
+		#region PICO8SYNTAX
+        private static string IfShorthandMatch(Match match)
         {
             string exp = match.Groups[1].ToString();
             if (match.Groups[1].ToString().Contains("then"))
@@ -208,7 +202,6 @@ namespace TsFreddie.Pico8
             }
             int nextChar = 0;
 
-            // Skip to the closing right parethese.
             LinkedList<char> stack = new LinkedList<char>();
             stack.AddLast('(');
             nextChar++;
@@ -236,12 +229,10 @@ namespace TsFreddie.Pico8
             return String.Format("if {0} then {1} end", exp, rest);
         }
 
-        private string UnaryAssignmentMatch(Match match)
+        private static string UnaryAssignmentMatch(Match match)
         {
-            //Debug.Log(match);
             string potentialExp = Regex.Replace(match.Groups[3].ToString(), @"\.\s+", _ => ".");
             string realExp = "";
-            //Debug.Log("potential: " + potentialExp);
 
             MatchCollection terms = Regex.Matches(potentialExp, @"(?:\-?(?:0x)?[0-9.]+)|(?:\-?[a-zA-Z_](?:[a-zA-Z0-9_]|(?:\.\s*))*(?:\[[^\]]\])*)");
 
@@ -260,7 +251,6 @@ namespace TsFreddie.Pico8
                 {
                     if (potentialExp[nextChar] == '(')
                     {
-                        // Skip to the closing right parethese.
                         LinkedList<char> stack = new LinkedList<char>();
                         stack.AddLast('(');
                         nextChar++;
@@ -292,7 +282,6 @@ namespace TsFreddie.Pico8
                 }
                 else if (nextChar == nextTerm.Index)
                 {
-                    //Debug.Log(string.Format("{0}: expecting: {1}, term: {2}", nextChar, expectTerm, nextTerm.ToString()));
                     if (!expectTerm)
                     {
                         break;
@@ -319,84 +308,70 @@ namespace TsFreddie.Pico8
             string operation = match.Groups[2].ToString();
 
             string result = string.Format("{0} = {0} {1} ({2}) {3}", assignee, operation, realExp, ProcessUnaryAssignment(potentialExp));
-            //Debug.Log("result: " + result);
             return result;
 
         }
         
-        public string ProcessUnaryAssignment(string str)
+        private static string ProcessUnaryAssignment(string str)
         {
             return Regex.Replace(str, @"([a-zA-Z_](?:[a-zA-Z0-9_]|(?:\.\s*))*(?:\[.*\])?)\s*([+\-*\/%])=\s*(.*)$", UnaryAssignmentMatch, RegexOptions.Multiline);
         }
 
-        public string ProcessIfShorthand(string str)
+        private static string ProcessIfShorthand(string str)
         {
-            //[iI][fF]\s*(\(.*\))\s*(.*)$
             return Regex.Replace(str, @"[iI][fF]\s*(\(.*)$", IfShorthandMatch, RegexOptions.Multiline);
         }
 
-        public void Preprocess(ref string script)
+        protected static void Preprocess(ref string script)
         {
+            script = script.Replace("!=", "~=");
             script = ProcessIfShorthand(ProcessUnaryAssignment(script));
         }
         #endregion
-        
-        public PicoEmulator() {
-            engine = new Script();
-            memory = new MemoryModule();
-            ppu = new PictureProcessingUnit(memory);
-            apu = new AudioProcessingUnit();
-            // Random seed
-            random = new System.Random();
-            // Register APIs
-            RegisterAPIs();
+
+		#region PICO8API
+        protected bool Btn(int b, int p = -1) {
+            return buttons[b];
         }
 
+        protected bool Btnp(int b, int p = -1) {
+            return buttons[b] && !lastButtons[b];
+        }
+		#endregion
+
+		
         public void LoadCartridge(Cartridge cart) {
             cartridge = cart;
             // Copy to memory
             memory.CopyFromROM(cart.ROM, 0, 0x4300);
-            #if UNITY_EDITOR
-                // lua debugger
-                var server = new MoonSharpVsCodeDebugServer();
-                server.Start();
-                server.AttachToScript(engine, "code");
-            #endif
             string script = cart.ExtractScript();
+            
             Run(script); 
-            if (engine.Globals["_init"] != null)
-                Call("_init");
+            Call("_init");
         }
-        public DynValue Call(string func, params DynValue[] args)
-        {
-            return engine.Call(engine.Globals[func], args);
+        public void SendInput(Buttons button) {
+            buttons[(int)button] = true;
         }
+		public abstract void Run(string script);
+		public abstract void Call(string func, params object[] args);
 
-        /* 
-        public DynValue Run(string script)
-        {
-            Preprocess(ref script);
-            DynValue luaScript = engine.LoadString(script);
-            DynValue coroutine = engine.CreateCoroutine(luaScript);
-            DynValue result = null;
-            int cycle = 0;
-            coroutine.Coroutine.AutoYieldCounter = 1000;
-            for (result = coroutine.Coroutine.Resume(); result.Type == DataType.YieldRequest; result = coroutine.Coroutine.Resume()) 
-            {
-                Debug.Log("cycle");
-                cycle += 4;
-                if (cycle > 1)
-                    return new DynValue();
+		public void Update() {
+            Call("_update");
+            Call("_draw");
+            ppu.Flip();
+
+            bool[] tmp = lastButtons;
+            lastButtons = buttons;
+            buttons = tmp;
+
+            for (int i = 0; i < (int)Buttons.UNDEFINED; i++) {
+                buttons[i] = false;
             }
-            return result;
-        }
-        */
-        public DynValue Run(string script)
-        {
-            Preprocess(ref script);
-            //return engine.DoFile("fact.lua");
-            return engine.DoString(script);
-        }
-    }
-}
+		}
 
+        public void UpdateSample(float[] data, int channels) {
+            apu.FillBuffer(data, channels);
+        }
+	}
+
+}
