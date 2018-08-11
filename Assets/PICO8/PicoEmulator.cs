@@ -43,7 +43,7 @@ namespace TsFreddie.Pico8
             memory.InitializeStates();
 
             ppu = new PictureProcessingUnit(memory);
-            apu = new AudioProcessingUnit();
+            apu = new AudioProcessingUnit(memory, 48000);
 			buttons = new bool[(int)Buttons.UNDEFINED];
             lastButtons = new bool[(int)Buttons.UNDEFINED];
 			
@@ -368,6 +368,10 @@ namespace TsFreddie.Pico8
                 buttons[i] = false;
             }
 		}
+
+        public void UpdateSample(float[] data, int channels) {
+            apu.FillBuffer(data, channels);
+        }
 	}
 
 }

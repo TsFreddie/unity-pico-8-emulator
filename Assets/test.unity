@@ -387,6 +387,7 @@ GameObject:
   - component: {fileID: 902407652}
   - component: {fileID: 902407655}
   - component: {fileID: 902407656}
+  - component: {fileID: 902407657}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -460,7 +461,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 902407651}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 952a3e0c1bcdcaf44b8ee8e7cfa23e81, type: 3}
   m_Name: 
@@ -480,6 +481,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   filename: C:\Users\TsFreddie\AppData\Roaming\pico-8\carts\hmm.p8.png
   mesh: {fileID: 1825648932}
+--- !u!114 &902407657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 902407651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf04154c2c7ff4d47bb1e76ccbf7e52c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waveform: 0
+  pitch: 63
 --- !u!1 &1027792246
 GameObject:
   m_ObjectHideFlags: 0

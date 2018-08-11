@@ -10,7 +10,9 @@ public class LuaTest : MonoBehaviour {
     public string filename;
     public MeshRenderer mesh;
     PicoEmulator processor;
-    // Use this for initialization
+    
+    Boolean initialized = false;
+
     void Start () {
         //int dis = Screen.currentResolution.refreshRate;
         //QualitySettings.vSyncCount = 2;
@@ -27,8 +29,7 @@ public class LuaTest : MonoBehaviour {
         */
 
         cart.LoadFromP8PNG(new FileStream(filename, FileMode.Open));
-        processor.Run("srand(100)");
-        //processor2.Run("srand(100)");
+
         // Load script
         processor.LoadCartridge(cart);
         //processor2.LoadCartridge(cart);
@@ -59,13 +60,14 @@ public class LuaTest : MonoBehaviour {
 	else
 		load_room(room.x+1,room.y)
 	end
-end");
+end");*/
         
         #if UNITY_EDITOR
             QualitySettings.vSyncCount = 0;  // VSync must be disabled
         #endif
         Application.targetFrameRate = 30;
-        */
+        
+        initialized = true;
     }
 
 	void Update () {
@@ -89,4 +91,10 @@ end");
         processor.Update();
         //processor2.Update();
 	}
+
+    void OnAudioFilterRead(float[] data, int channels) {
+        if (!initialized)
+            return;
+        processor.UpdateSample(data,channels);
+    }
 }
